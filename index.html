@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Maison de la Fork Holiday Post</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a dark stage holds one Instagram post (dark Instagram theme on purpose).
+   Wide screens get the desktop post view (media left, comments panel right) sized to the window
+   height; narrow screens and the "Phone" toggle get the mobile feed card. Slides with two
+   versions show a V1 / V2 switch under the post. A blurred copy of the current slide fills the stage. */
+:root{
+  color-scheme:dark;
+  --stage:#0e0e10; --stage-fg:#f2f2f2; --stage-muted:#a8a8ad; --chip:rgba(255,255,255,.10); --chip-hover:rgba(255,255,255,.16); --chip-on:#f2f2f2; --chip-on-fg:#121214;
+  --ig-bg:#000000; --ig-fg:#f5f5f5; --ig-muted:#a8a8a8; --ig-line:#262626; --ig-soft:#1a1a1a;
+  --ig-link:#e0f1ff; --ig-blue:#0095f6; --ig-like:#ff3040; --ig-media:#000000;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --r:.75; --ar:3 / 4;
+}
+html,body{height:100%}
+body{background:var(--stage);color:var(--stage-fg);font-family:var(--font);font-size:14px;overflow-x:hidden}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ig-blue);outline-offset:2px}
+
+.ambient{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.ambient img{position:absolute;inset:-10%;width:120%;height:120%;object-fit:cover;filter:blur(80px) saturate(1.15) brightness(.55);opacity:0;transition:opacity .7s ease}
+.ambient img.on{opacity:.75}
+
+.stage{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;box-sizing:border-box;
+  padding-block:16px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:36px}
+.bar-label{color:var(--stage-muted);font-size:13px}
+.seg{display:inline-flex;background:var(--chip);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--stage-fg);padding:6px 14px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600}
+.seg button:hover{background:var(--chip-hover)}
+.seg button[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-fg)}
+
+.vpick{position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:center;gap:8px;padding:4px 4px 4px 12px;border-radius:999px;
+  background:rgba(255,255,255,.92);color:#262626;box-shadow:0 2px 12px rgba(0,0,0,.25);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.vpick-label{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#5c5c5c}
+.vpick-btns{display:flex;gap:2px;background:rgba(38,38,38,.08);border-radius:999px;padding:2px}
+.vpick button{border:0;background:transparent;color:#262626;font-size:14px;font-weight:700;padding:7px 16px;border-radius:999px;cursor:pointer;min-width:48px}
+.vpick button:hover{background:rgba(38,38,38,.10)}
+.vpick button[aria-pressed="true"]{background:#262626;color:#fff}
+
+/* ---------- carousel ---------- */
+.media{position:relative;background:var(--ig-media);overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.track{display:flex;height:100%;transition:transform .35s cubic-bezier(.25,.8,.25,1);will-change:transform}
+.track.dragging{transition:none}
+.slide{flex:0 0 100%;height:100%;position:relative;background:var(--ig-media)}
+.slide img,.slide video{width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;pointer-events:none}
+.nav{position:absolute;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.88);color:#262626;
+  display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.25);z-index:3}
+.nav svg{width:14px;height:14px}
+.nav.prev{left:10px}.nav.next{right:10px}
+@media (hover:none){.nav{display:none}}
+.count{position:absolute;top:12px;right:12px;background:rgba(18,18,18,.7);color:#fff;font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;z-index:3;font-variant-numeric:tabular-nums}
+.mute{position:absolute;right:12px;bottom:12px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(18,18,18,.75);color:#fff;display:grid;place-items:center;z-index:3;cursor:pointer}
+.mute svg{width:14px;height:14px}
+.dots{display:flex;gap:4px;justify-content:center;align-items:center}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--ig-line);transition:background .2s}
+.dots i.on{background:var(--ig-blue)}
+.dots.over{position:absolute;left:0;right:0;bottom:14px;z-index:3}
+.dots.over i{background:rgba(255,255,255,.5)}
+.dots.over i.on{background:#fff}
+.burst{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:4}
+.burst svg{width:96px;height:96px;fill:#fff;filter:drop-shadow(0 4px 18px rgba(0,0,0,.35));opacity:0;transform:scale(.2)}
+.burst.go svg{animation:burst .9s ease forwards}
+@keyframes burst{0%{opacity:0;transform:scale(.2)}15%{opacity:1;transform:scale(1.15)}30%{transform:scale(.95)}45%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(1)}}
+
+/* ---------- Instagram chrome ---------- */
+.ig{background:var(--ig-bg);color:var(--ig-fg)}
+.ig .icon-btn{border:0;background:transparent;padding:8px;cursor:pointer;display:grid;place-items:center;color:var(--ig-fg)}
+.ig .icon-btn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linejoin:round;stroke-linecap:round}
+.ig .icon-btn.liked svg{fill:var(--ig-like);stroke:var(--ig-like)}
+.ig .icon-btn.saved svg{fill:currentColor}
+.ig .icon-btn.pop svg{animation:pop .35s ease}
+@keyframes pop{50%{transform:scale(1.25)}}
+.head{display:flex;align-items:center;gap:10px;padding:12px 6px 12px 14px}
+.avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex:none;background:var(--ig-soft)}
+.who{min-width:0;flex:1;line-height:1.25;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.uname{font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.badge{width:12px;height:12px;flex:none}
+.dotsep{color:var(--ig-muted)}
+.follow{color:var(--ig-blue);font-weight:600}
+.more svg{fill:currentColor!important;stroke:none!important}
+.actions{display:flex;align-items:center;padding:4px 6px}
+.actions .spacer{flex:1;display:flex;justify-content:center}
+.likes{font-weight:600;padding:0 14px 6px;font-variant-numeric:tabular-nums}
+.caption{padding:0 14px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
+.caption .uname{margin-right:4px}
+.time{color:var(--ig-muted);font-size:12px;padding:8px 14px 14px}
+
+/* ---------- desktop post view ---------- */
+.post-view{--pw:clamp(340px, 30vw, 440px);
+  --mh:min(calc(100dvh - 32px - 48px), calc((100vw - 32px - var(--pw)) / var(--r)), 1180px);
+  display:flex;border-radius:4px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);max-width:100%}
+.post-view .media{height:var(--mh);width:calc(var(--mh) * var(--r))}
+.post-view .panel{width:var(--pw);display:flex;flex-direction:column;border-left:1px solid var(--ig-line);min-width:0}
+.post-view .head{border-bottom:1px solid var(--ig-line)}
+.post-view .thread{flex:1;overflow-y:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:16px;min-height:0}
+.post-view .cap-row{display:flex;gap:12px}
+.post-view .cap-row .caption{padding:0;flex:1;min-width:0}
+.post-view .cap-row .time{padding:6px 0 0}
+.post-view .empty{margin:auto;text-align:center;color:var(--ig-muted);display:flex;flex-direction:column;gap:6px;padding:24px 0}
+.post-view .empty strong{font-size:20px;font-weight:700;color:var(--ig-fg)}
+.post-view .foot{border-top:1px solid var(--ig-line)}
+.post-view .foot .time{padding:4px 14px 12px}
+.add{display:flex;align-items:center;gap:10px;border-top:1px solid var(--ig-line);padding:8px 14px}
+.add input{flex:1;border:0;background:transparent;color:var(--ig-fg);font:inherit;padding:8px 0;outline:none;min-width:0}
+.add button{border:0;background:none;color:var(--ig-blue);font-weight:600;opacity:.4;cursor:default}
+
+/* ---------- phone feed view ---------- */
+.feed-view{--cw:min(520px, calc((100dvh - 32px - 48px - 220px) * var(--r)), 100%);width:var(--cw);min-width:min(320px,100%);border-radius:10px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.feed-view .media{width:100%;aspect-ratio:var(--ar);max-width:100%}
+.narrow .feed-view{--cw:min(470px, 100%)}
+.narrow .bar-label{display:none}
+
+@media (prefers-reduced-motion: reduce){.track{transition:none}.burst.go svg,.ig .icon-btn.pop svg{animation:none}.ambient img{transition:none}}
+</style>
+
+<div class="ambient" id="ambient" aria-hidden="true"><img alt=""><img alt=""></div>
+
+<main class="stage" id="stage">
+  <div class="bar">
+    <span class="bar-label" id="barLabel"></span>
+    <div class="seg" id="viewSeg" role="group" aria-label="Preview as">
+      <button type="button" data-mode="post" aria-pressed="true">Desktop</button>
+      <button type="button" data-mode="feed" aria-pressed="false">Phone</button>
+    </div>
+  </div>
+  <div id="postRoot"></div>
+</main>
+
+<script>
+/* ============ Post content: edit this block to change the post ============
+   Each slide has one or more versions. A slide with two or more versions shows a
+   V1 / V2 switch under the post. type is "image" or "video"; poster is the still
+   shown before a video loads. */
+const POST = {
+  username: "maisondelafork",
+  verified: true,
+  avatar: "media/avatar.jpg",
+  likes: "1,248",
+  time: "Just now",
+  ratio: "3:4",
+  caption: "🤍",
+  slides: [
+    { versions: [ { type: "image", src: "media/slide1.jpg" } ] },
+    { versions: [ { type: "video", src: "media/slide2.mp4", poster: "media/slide2_poster.jpg" } ] },
+    { versions: [ { label: "V1", type: "video", src: "media/slide3_v1.mp4", poster: "media/slide3_v1_poster.jpg" },
+                  { label: "V2", type: "video", src: "media/slide3_v2.mp4", poster: "media/slide3_v2_poster.jpg" } ] },
+    { versions: [ { type: "image", src: "media/slide4.jpg" } ] },
+    { versions: [ { label: "V1", type: "image", src: "media/slide5_v1.jpg" },
+                  { label: "V2", type: "image", src: "media/slide5_v2.jpg" } ] },
+    { versions: [ { type: "image", src: "media/slide6.jpg" } ] },
+    { versions: [ { type: "image", src: "media/slide7.jpg" } ] }
+  ]
+};
+/* ========================================================================== */
+
+(function(){
+"use strict";
+const $ = (s, el=document) => el.querySelector(s);
+const badgePath = (() => { let d = ''; for (let k = 0; k <= 96; k++) { const t = k/96*Math.PI*2, r = 10.4 + 1.3*Math.cos(8*t); d += (k ? 'L' : 'M') + (12 + r*Math.sin(t)).toFixed(2) + ' ' + (12 - r*Math.cos(t)).toFixed(2); } return d + 'Z'; })();
+const ICON = {
+  badge:`<svg class="badge" viewBox="0 0 24 24" role="img" aria-label="Verified"><path d="${badgePath}" fill="#0095f6"/><path d="M7.6 12.3l3 3 5.9-6.1" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  heart:'<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.6-4.6-9.5-9.3C1.2 7.9 3.3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3.1 1.6-1.9 3.1-3.1 5.2-3.1 3.5 0 5.6 3.4 4.3 6.7-1.9 4.7-9.5 9.3-9.5 9.3z"/></svg>',
+  comment:'<svg viewBox="0 0 24 24"><path d="M20.7 16.9A9 9 0 1 0 17.2 20.3L21.5 21.5z"/></svg>',
+  share:'<svg viewBox="0 0 24 24"><path d="M21.5 2.5 2.5 9.3l7.6 3.6 3.7 8.6z"/><path d="M21.5 2.5 10.1 12.9"/></svg>',
+  save:'<svg viewBox="0 0 24 24"><path d="M19 21.5l-7-6-7 6v-18h14z"/></svg>',
+  more:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
+  prev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  next:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  muted:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  sound:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  bigheart:'<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.6-4.6-9.5-9.3C1.2 7.9 3.3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3.1 1.6-1.9 3.1-3.1 5.2-3.1 3.5 0 5.6 3.4 4.3 6.7-1.9 4.7-9.5 9.3-9.5 9.3z"/></svg>'
+};
+
+const P = POST, N = P.slides.length;
+const pick = P.slides.map(() => 0);        // chosen version per slide
+let idx = 0, liked = false, bookmarked = false, soundOn = false, mode = 'post';
+const narrowMQ = matchMedia('(max-width: 899px), (max-aspect-ratio: 4/5)');
+try { const m = localStorage.getItem('mdlf-mode'); if (m === 'post' || m === 'feed') mode = m; } catch(e) {}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ratioNum = r => { const [a,b] = String(r||'3:4').split(':').map(Number); return (a>0&&b>0) ? a/b : .75; };
+const cur = i => P.slides[i].versions[pick[i]];
+const effMode = () => narrowMQ.matches ? 'feed' : mode;
+const fmtCaption = t => esc(t).replace(/(^|\s)([#@][\p{L}\p{N}_.]+)/gu, '$1<span style="color:var(--ig-link)">$2</span>');
+
+function slideInner(i){
+  const v = cur(i);
+  return v.type === 'video'
+    ? `<video src="${esc(v.src)}"${v.poster ? ` poster="${esc(v.poster)}"` : ''} muted loop playsinline preload="${i === idx ? 'auto' : 'metadata'}"></video>`
+    : `<img src="${esc(v.src)}" alt="Slide ${i+1} of ${N}" draggable="false"${i > 1 ? ' loading="lazy"' : ''}>`;
+}
+const uname = () => `<span class="uname">${esc(P.username)}${P.verified ? ICON.badge : ''}</span>`;
+const headHTML = () => `<div class="head"><img class="avatar" src="${esc(P.avatar)}" alt="">
+  <div class="who">${uname()}<span class="dotsep">•</span><span class="follow">Follow</span></div>
+  <button class="icon-btn more" type="button" aria-label="More options">${ICON.more}</button></div>`;
+const dotsInner = () => N > 1 ? P.slides.map((_,i) => `<i class="${i===idx?'on':''}"></i>`).join('') : '';
+const actionsHTML = withDots => `<div class="actions">
+  <button class="icon-btn like${liked?' liked':''}" type="button" aria-label="Like" aria-pressed="${liked}">${ICON.heart}</button>
+  <button class="icon-btn" type="button" aria-label="Comment">${ICON.comment}</button>
+  <button class="icon-btn" type="button" aria-label="Share">${ICON.share}</button>
+  <span class="spacer">${withDots ? `<span class="dots" aria-hidden="true">${dotsInner()}</span>` : ''}</span>
+  <button class="icon-btn save${bookmarked?' saved':''}" type="button" aria-label="Save" aria-pressed="${bookmarked}">${ICON.save}</button></div>`;
+function likesText(){
+  const raw = String(P.likes||'').trim(); const n = Number(raw.replace(/[^\d]/g,''));
+  if (!raw) return liked ? '1 like' : '';
+  return liked && n ? `${(n+1).toLocaleString('en-US')} likes` : `${raw} likes`;
+}
+const mediaHTML = over => `<div class="media" id="media" aria-roledescription="carousel" aria-label="Post slides">
+  <div class="track" id="track">${P.slides.map((_,i) => `<div class="slide" data-i="${i}">${slideInner(i)}</div>`).join('')}</div>
+  <button class="nav prev" type="button" aria-label="Previous slide">${ICON.prev}</button>
+  <button class="nav next" type="button" aria-label="Next slide">${ICON.next}</button>
+  ${N>1 && !over ? '<div class="count" aria-live="polite"></div>' : ''}
+  ${N>1 && over ? `<div class="dots over" aria-hidden="true">${dotsInner()}</div>` : ''}
+  <button class="mute" type="button" aria-label="Turn sound on" hidden>${ICON.muted}</button>
+  <div class="vpick" id="vpick" role="group" aria-label="Slide version" hidden><span class="vpick-label">Version</span><span class="vpick-btns" id="vseg"></span></div>
+  <div class="burst">${ICON.bigheart}</div></div>`;
+
+function render(){
+  const root = $('#postRoot'), m = effMode();
+  document.documentElement.style.setProperty('--r', ratioNum(P.ratio));
+  document.documentElement.style.setProperty('--ar', String(P.ratio||'3:4').replace(':',' / '));
+  $('#stage').classList.toggle('narrow', narrowMQ.matches);
+  $('#viewSeg').hidden = narrowMQ.matches;
+  $('#viewSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+  $('#barLabel').textContent = `${N} slides · preview`;
+  const lt = likesText();
+  if (m === 'post'){
+    root.className = 'ig post-view';
+    root.innerHTML = `${mediaHTML(true)}<section class="panel">${headHTML()}
+      <div class="thread">
+        ${P.caption ? `<div class="cap-row"><img class="avatar" src="${esc(P.avatar)}" alt=""><div class="caption">${uname()} ${fmtCaption(P.caption)}<div class="time">${esc(P.time||'')}</div></div></div>` : ''}
+      </div>
+      <div class="foot">${actionsHTML(false)}
+        <div class="likes">${lt ? esc(lt) : 'Be the first to like this'}</div>
+        <div class="time">${esc(P.time||'')}</div>
+        <div class="add"><input id="cmt" type="text" placeholder="Add a comment…" aria-label="Add a comment"><button type="button" disabled>Post</button></div>
+      </div></section>`;
+  } else {
+    root.className = 'ig feed-view';
+    root.innerHTML = `${headHTML()}${mediaHTML(false)}${actionsHTML(true)}
+      ${lt ? `<div class="likes">${esc(lt)}</div>` : ''}
+      ${P.caption ? `<div class="caption">${uname()} ${fmtCaption(P.caption)}</div>` : ''}
+      <div class="time">${esc(P.time||'')}</div>`;
+  }
+  wire(); go(idx, true);
+}
+
+let track, media;
+function go(i, instant){
+  idx = Math.max(0, Math.min(N-1, i));
+  track = $('#track'); media = $('#media');
+  if (instant) track.classList.add('dragging');
+  track.style.transform = `translate3d(${-idx * media.clientWidth}px,0,0)`;
+  if (instant) { void track.offsetWidth; track.classList.remove('dragging'); }
+  media.querySelector('.prev').hidden = idx === 0;
+  media.querySelector('.next').hidden = idx === N-1;
+  const c = media.querySelector('.count'); if (c) c.textContent = `${idx+1}/${N}`;
+  document.querySelectorAll('#postRoot .dots').forEach(d => d.querySelectorAll('i').forEach((el,k) => el.classList.toggle('on', k===idx)));
+  playActive();
+  const isVid = cur(idx).type === 'video';
+  media.querySelector('.mute').hidden = !isVid; syncMute();
+  versionBar(); ambient();
+}
+function playActive(){
+  media.querySelectorAll('video').forEach(v => {
+    const k = Number(v.parentElement.dataset.i);
+    v.muted = !soundOn;
+    if (k === idx) { v.preload = 'auto'; const p = v.play(); if (p && p.catch) p.catch(() => { soundOn = false; v.muted = true; syncMute(); v.play().catch(()=>{}); }); }
+    else v.pause();
+  });
+}
+function syncMute(){
+  const mb = media && media.querySelector('.mute'); if (!mb) return;
+  mb.innerHTML = soundOn ? ICON.sound : ICON.muted;
+  mb.setAttribute('aria-label', soundOn ? 'Turn sound off' : 'Turn sound on');
+}
+function versionBar(){
+  const vs = P.slides[idx].versions, bar = $('#vpick'), seg = $('#vseg');
+  if (vs.length < 2) { bar.hidden = true; seg.innerHTML = ''; return; }
+  bar.hidden = false;
+  seg.innerHTML = vs.map((v,k) => `<button type="button" data-v="${k}" aria-pressed="${k===pick[idx]}">${esc(v.label || 'V'+(k+1))}</button>`).join('');
+}
+function onVersion(e){
+  e.stopPropagation();
+  const b = e.target.closest('button[data-v]'); if (!b) return;
+  const k = Number(b.dataset.v); if (k === pick[idx]) return;
+  pick[idx] = k;
+  const el = media.querySelector(`.slide[data-i="${idx}"]`); el.innerHTML = slideInner(idx);
+  go(idx, true);
+}
+let ambFlip = 0;
+function ambient(){
+  const v = cur(idx), want = v.type === 'video' ? v.poster : v.src, imgs = $('#ambient').querySelectorAll('img');
+  if (!want) { imgs.forEach(im => im.classList.remove('on')); return; }
+  if (imgs[ambFlip].classList.contains('on') && imgs[ambFlip].getAttribute('src') === want) return;
+  ambFlip = 1 - ambFlip; const nxt = imgs[ambFlip];
+  nxt.onload = () => { nxt.classList.add('on'); imgs[1-ambFlip].classList.remove('on'); };
+  nxt.src = want; if (nxt.complete && nxt.naturalWidth) nxt.onload();
+}
+function setLiked(v){
+  liked = v;
+  document.querySelectorAll('#postRoot .like').forEach(btn => {
+    btn.classList.toggle('liked', liked); btn.setAttribute('aria-pressed', String(liked));
+    btn.classList.remove('pop'); void btn.offsetWidth; if (liked) btn.classList.add('pop');
+  });
+  const lk = $('#postRoot .likes'); if (lk) lk.textContent = likesText() || 'Be the first to like this';
+}
+function heartBurst(){ const b = media.querySelector('.burst'); b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); if (!liked) setLiked(true); }
+function wire(){
+  media = $('#media'); track = $('#track');
+  media.querySelector('.prev').addEventListener('click', e => { e.stopPropagation(); go(idx-1); });
+  media.querySelector('.next').addEventListener('click', e => { e.stopPropagation(); go(idx+1); });
+  $('#vpick').addEventListener('click', onVersion);
+  $('#vpick').addEventListener('pointerdown', e => e.stopPropagation());
+  media.querySelector('.mute').addEventListener('click', e => { e.stopPropagation(); soundOn = !soundOn; playActive(); syncMute(); });
+  document.querySelectorAll('#postRoot .like').forEach(b => b.addEventListener('click', () => setLiked(!liked)));
+  const sv = $('#postRoot .save'); sv.addEventListener('click', () => { bookmarked = !bookmarked; sv.classList.toggle('saved', bookmarked); sv.setAttribute('aria-pressed', String(bookmarked)); });
+  let sx=0, sy=0, dx=0, down=false, moved=false, lastTap=0, pid=null;
+  media.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; down = true; moved = false; sx = e.clientX; sy = e.clientY; dx = 0; pid = e.pointerId; });
+  media.addEventListener('pointermove', e => {
+    if (!down || e.pointerId !== pid) return;
+    dx = e.clientX - sx;
+    if (!moved && Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(e.clientY - sy)) { moved = true; track.classList.add('dragging'); try { media.setPointerCapture(pid); } catch(_) {} }
+    if (moved) { let d = dx; if ((idx === 0 && d > 0) || (idx === N-1 && d < 0)) d *= .35; track.style.transform = `translate3d(${-idx * media.clientWidth + d}px,0,0)`; }
+  });
+  const end = e => {
+    if (!down || e.pointerId !== pid) return;
+    down = false; track.classList.remove('dragging');
+    if (moved) { const w = media.clientWidth; if (dx < -w*.18) go(idx+1); else if (dx > w*.18) go(idx-1); else go(idx); return; }
+    if (e.type === 'pointercancel') return;
+    const now = Date.now();
+    if (now - lastTap < 320) { heartBurst(); lastTap = 0; }
+    else { lastTap = now; if (cur(idx).type === 'video') setTimeout(() => { if (lastTap === now) { soundOn = !soundOn; playActive(); syncMute(); } }, 330); }
+  };
+  media.addEventListener('pointerup', end); media.addEventListener('pointercancel', end);
+}
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea,select')) return;
+  if (e.key === 'ArrowRight') go(idx+1); else if (e.key === 'ArrowLeft') go(idx-1);
+});
+$('#viewSeg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-mode]'); if (!b) return;
+  mode = b.dataset.mode; try { localStorage.setItem('mdlf-mode', mode); } catch(_) {}
+  render();
+});
+narrowMQ.addEventListener('change', render);
+let rsT; addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => media && go(idx, true), 60); });
+render();
+})();
+</script>
+
+</body>
+</html>
