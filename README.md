@@ -1,10 +1,9 @@
 # Maison de la Fork Holiday Post Preview
 
-An Instagram-style preview of the 7-slide holiday carousel, for sharing with the client.
+An Instagram-style preview of the 7-slide holiday carousel (version 2), for sharing with the client.
 
 - **Desktop** view: Instagram's desktop post layout (media left, caption and comments right).
 - **Phone** view: Instagram's mobile feed card. Phones always get this view.
-- Slides 3 and 5 have two versions; a **V1 / V2** switch appears on top of the slide (top-left) on those slides.
 - Swipe or use the arrows / keyboard arrow keys to change slides. Double-click a slide to like it.
   Videos play muted; the speaker button turns sound on.
 
@@ -19,5 +18,5 @@ An Instagram-style preview of the 7-slide holiday carousel, for sharing with the
 
 Open `index.html` and edit the `POST` block near the top of the `<script>`:
 username, verified tick, avatar, likes, caption, and the list of slides.
-Each slide has one or more `versions`; add a second version to show the V1 / V2 switch on that slide.
+Each slide has one or more `versions`; add a second version to show a V1 / V2 switch on top of that slide.
 Put new files in `media/`. Videos should be H.264 MP4, 1080 × 1440, ideally under 15 MB each.

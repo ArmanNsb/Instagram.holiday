@@ -6,7 +6,7 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
-<title>Maison de la Fork Holiday Post</title>
+<title>Maison de la Fork Holiday Post v2</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: a dark stage holds one Instagram post (dark Instagram theme on purpose).
@@ -141,7 +141,7 @@ button{font:inherit;color:inherit}
 <script>
 /* ============ Post content: edit this block to change the post ============
    Each slide has one or more versions. A slide with two or more versions shows a
-   V1 / V2 switch under the post. type is "image" or "video"; poster is the still
+   V1 / V2 switch on top of the slide. type is "image" or "video"; poster is the still
    shown before a video loads. */
 const POST = {
   username: "maisondelafork",
@@ -154,12 +154,10 @@ const POST = {
   slides: [
     { versions: [ { type: "image", src: "media/slide1.jpg" } ] },
     { versions: [ { type: "video", src: "media/slide2.mp4", poster: "media/slide2_poster.jpg" } ] },
-    { versions: [ { label: "V1", type: "video", src: "media/slide3_v1.mp4", poster: "media/slide3_v1_poster.jpg" },
-                  { label: "V2", type: "video", src: "media/slide3_v2.mp4", poster: "media/slide3_v2_poster.jpg" } ] },
+    { versions: [ { type: "video", src: "media/slide3.mp4", poster: "media/slide3_poster.jpg" } ] },
     { versions: [ { type: "image", src: "media/slide4.jpg" } ] },
-    { versions: [ { label: "V1", type: "image", src: "media/slide5_v1.jpg" },
-                  { label: "V2", type: "image", src: "media/slide5_v2.jpg" } ] },
-    { versions: [ { type: "image", src: "media/slide6.jpg" } ] },
+    { versions: [ { type: "image", src: "media/slide5.jpg" } ] },
+    { versions: [ { type: "video", src: "media/slide6.mp4", poster: "media/slide6_poster.jpg" } ] },
     { versions: [ { type: "image", src: "media/slide7.jpg" } ] }
   ]
 };
