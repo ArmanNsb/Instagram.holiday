@@ -1,6 +1,6 @@
 # Maison de la Fork Holiday Post Preview
 
-An Instagram-style preview of the 7-slide holiday carousel (Persian sweets), for sharing with the client.
+An Instagram-style preview of the 10-slide holiday carousel (Persian sweets), for sharing with the client.
 
 - **Desktop** view: Instagram's desktop post layout (media left, caption and comments right).
 - **Phone** view: Instagram's mobile feed card. Phones always get this view.
